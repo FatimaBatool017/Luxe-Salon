@@ -1,0 +1,52 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class AppColors {
+  static const blush = Color(0xFFF8E1E7);
+  static const roseGold = Color(0xFFB76E79);
+  static const champagne = Color(0xFFF7E7CE);
+  static const ivory = Color(0xFFFFFAF5);
+  static const plum = Color(0xFF3D1F2B);
+  static const gold = Color(0xFFD4AF37);
+  static const darkBg = Color(0xFF1E1217);
+}
+
+class AppTheme {
+  static ThemeData light() => _build(Brightness.light);
+  static ThemeData dark() => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness b) {
+    final dark = b == Brightness.dark;
+    final ink = dark ? AppColors.blush : AppColors.plum;
+
+    final base = GoogleFonts.poppinsTextTheme(ThemeData(brightness: b).textTheme)
+        .apply(bodyColor: ink, displayColor: ink);
+    TextStyle serif(TextStyle? s) => GoogleFonts.playfairDisplay(
+        textStyle: s, fontWeight: FontWeight.w700, color: ink);
+
+    final text = base.copyWith(
+      headlineMedium: serif(base.headlineMedium),
+      headlineSmall: serif(base.headlineSmall),
+      titleLarge: serif(base.titleLarge),
+    );
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: b,
+      scaffoldBackgroundColor: dark ? AppColors.darkBg : AppColors.ivory,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.roseGold,
+        brightness: b,
+      ).copyWith(primary: AppColors.roseGold, secondary: AppColors.gold),
+      textTheme: text,
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.roseGold,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+        ),
+      ),
+    );
+  }
+}

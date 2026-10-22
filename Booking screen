@@ -1,0 +1,158 @@
+import 'package:flutter/material.dart';
+import '../core/theme.dart';
+import '../data/dummy_data.dart';
+import '../widgets/salon_graphics.dart';
+
+/// Booking flow: services, stylist, date, time slot, summary, confirm.
+class BookingScreen extends StatefulWidget {
+  const BookingScreen({super.key});
+  @override
+  State<BookingScreen> createState() => _BookingScreenState();
+}
+
+class _BookingScreenState extends State<BookingScreen> {
+  final Set<int> _picked = {};
+  int _stylist = 0;
+  int _day = 0;
+  String? _slot;
+
+  static const _slots = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30'];
+  static const _booked = {'11:30', '16:00'};
+  static const _wd = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  int get _total => _picked.fold(0, (s, i) => s + services[i].price);
+  bool get _ready => _picked.isNotEmpty && _slot != null;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final today = DateTime.now();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Book a visit', style: t.titleLarge),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Stack(children: [
+        const BlobBackground(),
+        ListView(padding: const EdgeInsets.fromLTRB(20, 8, 20, 130), children: [
+          Text('Choose services', style: t.titleMedium),
+          const SizedBox(height: 10),
+          Wrap(spacing: 8, runSpacing: 8, children: [
+            for (var i = 0; i < services.length; i++)
+              FilterChip(
+                avatar: Icon(services[i].icon, size: 18),
+                label: Text('${services[i].name}  Rs ${services[i].price}'),
+                selected: _picked.contains(i),
+                selectedColor: AppColors.blush,
+                checkmarkColor: AppColors.roseGold,
+                onSelected: (v) => setState(() => v ? _picked.add(i) : _picked.remove(i)),
+              ),
+          ]),
+          const SizedBox(height: 22),
+          Text('Choose your stylist', style: t.titleMedium),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 40,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: stylists.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => ChoiceChip(
+                label: Text(stylists[i].name),
+                selected: _stylist == i,
+                selectedColor: AppColors.blush,
+                onSelected: (_) => setState(() => _stylist = i),
+              ),
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text('Pick a date', style: t.titleMedium),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 74,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: 10,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (_, i) {
+                final d = today.add(Duration(days: i));
+                final on = _day == i;
+                return GestureDetector(
+                  onTap: () => setState(() => _day = i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 58,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: on ? AppColors.roseGold : tint(Colors.white, .8),
+                      border: Border.all(color: AppColors.roseGold, width: on ? 0 : 1),
+                    ),
+                    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text(_wd[d.weekday - 1],
+                          style: TextStyle(fontSize: 12, color: on ? Colors.white : AppColors.plum)),
+                      const SizedBox(height: 4),
+                      Text('${d.day}',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: on ? Colors.white : AppColors.plum)),
+                    ]),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 22),
+          Text('Pick a time', style: t.titleMedium),
+          const SizedBox(height: 10),
+          Wrap(spacing: 10, runSpacing: 10, children: [
+            for (final s in _slots)
+              ChoiceChip(
+                label: Text(s),
+                selected: _slot == s,
+                selectedColor: AppColors.blush,
+                onSelected: _booked.contains(s) ? null : (_) => setState(() => _slot = s),
+                disabledColor: Colors.black12,
+                labelStyle: TextStyle(
+                    decoration: _booked.contains(s) ? TextDecoration.lineThrough : null),
+              ),
+          ]),
+          const SizedBox(height: 6),
+          Text('Crossed-out times are already booked.', style: t.bodySmall),
+        ]),
+        Positioned(
+          left: 20, right: 20, bottom: 24,
+          child: ElevatedButton(
+            onPressed: _ready ? _confirm : null,
+            child: Text(_picked.isEmpty ? 'Choose a service to continue' : 'Confirm booking · Rs $_total'),
+          ),
+        ),
+      ]),
+    );
+  }
+
+  void _confirm() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const SizedBox(height: 120, width: 160, child: AnimatedSparkles()),
+            Text('You are booked', style: Theme.of(ctx).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text('${stylists[_stylist].name} will see you at $_slot.',
+                textAlign: TextAlign.center),
+            const SizedBox(height: 18),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text('Back to home'),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+}

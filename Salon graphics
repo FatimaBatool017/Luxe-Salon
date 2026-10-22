@@ -1,0 +1,261 @@
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+import '../core/theme.dart';
+
+Color tint(Color c, double opacity) => c.withAlpha((opacity * 255).round());
+
+/// Soft blurred gradient blobs behind every screen. Use as a Stack child.
+class BlobBackground extends StatelessWidget {
+  const BlobBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    Widget blob(double size, Color c) => Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(colors: [tint(c, .55), tint(c, 0)]),
+          ),
+        );
+    return Positioned.fill(
+      child: Container(
+        color: dark ? AppColors.darkBg : AppColors.ivory,
+        child: Stack(children: [
+          Positioned(top: -80, right: -60, child: blob(300, AppColors.blush)),
+          Positioned(top: 380, left: -120, child: blob(320, AppColors.champagne)),
+          Positioned(bottom: 120, right: -100, child: blob(300, AppColors.roseGold)),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Twinkling four-point stars.
+class AnimatedSparkles extends StatefulWidget {
+  final Color color;
+  const AnimatedSparkles({super.key, this.color = AppColors.gold});
+  @override
+  State<AnimatedSparkles> createState() => _AnimatedSparklesState();
+}
+
+class _AnimatedSparklesState extends State<AnimatedSparkles>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c =
+      AnimationController(vsync: this, duration: const Duration(seconds: 3))
+        ..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _c,
+        builder: (_, __) =>
+            CustomPaint(painter: _SparklePainter(_c.value, widget.color)),
+      );
+}
+
+class _SparklePainter extends CustomPainter {
+  final double t;
+  final Color color;
+  _SparklePainter(this.t, this.color);
+  static const _pts = [
+    Offset(.15, .2), Offset(.82, .15), Offset(.7, .75), Offset(.25, .82), Offset(.92, .5),
+  ];
+
+  @override
+  void paint(Canvas canvas, Size s) {
+    for (var i = 0; i < _pts.length; i++) {
+      final phase = (math.sin(t * 2 * math.pi + i * 1.3) + 1) / 2;
+      final r = (4 + 9 * phase) * (i.isEven ? 1 : .7);
+      final c = Offset(_pts[i].dx * s.width, _pts[i].dy * s.height);
+      final path = Path()
+        ..moveTo(c.dx, c.dy - r)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx + r, c.dy)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy + r)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx - r, c.dy)
+        ..quadraticBezierTo(c.dx, c.dy, c.dx, c.dy - r)
+        ..close();
+      canvas.drawPath(path, Paint()..color = tint(color, .35 + .65 * phase));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklePainter old) => old.t != t;
+}
+
+/// Line-art vanity mirror illustration.
+class MirrorPainter extends CustomPainter {
+  final Color color;
+  const MirrorPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width * .5, size.height * .38);
+    final rx = size.width * .4, ry = size.height * .36;
+    final oval = Rect.fromCenter(center: c, width: rx * 2, height: ry * 2);
+    canvas.drawOval(oval, Paint()..color = tint(Colors.white, .28));
+    final line = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..color = color;
+    canvas.drawOval(oval, line..strokeWidth = 3.5);
+    canvas.drawOval(oval.deflate(8), line..strokeWidth = 1.2);
+    canvas.drawLine(Offset(c.dx, c.dy + ry), Offset(c.dx, size.height * .96),
+        line..strokeWidth = 5);
+    // highlight glint
+    canvas.drawArc(oval.deflate(18), -2.6, .9, false, line..strokeWidth = 2.5);
+  }
+
+  @override
+  bool shouldRepaint(covariant MirrorPainter old) => old.color != color;
+}
+
+/// Botanical vine for card corners.
+class BotanicalPainter extends CustomPainter {
+  final Color color;
+  const BotanicalPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, size.height)
+      ..quadraticBezierTo(size.width * .1, size.height * .35, size.width, 0);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = tint(color, .8));
+    final metric = path.computeMetrics().first;
+    final leaf = Paint()..color = tint(color, .4);
+    for (var i = 1; i <= 5; i++) {
+      final tg = metric.getTangentForOffset(metric.length * i / 6)!;
+      canvas.save();
+      canvas.translate(tg.position.dx, tg.position.dy);
+      canvas.rotate(tg.angle + (i.isEven ? -.9 : .9));
+      canvas.drawOval(const Rect.fromLTWH(0, -5, 26, 10), leaf);
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant BotanicalPainter old) => old.color != color;
+}
+
+/// Circular service icon with a rose-gold ring.
+class ServiceBubble extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  const ServiceBubble({super.key, required this.icon, required this.label, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 78,
+        child: Column(children: [
+          Container(
+            width: 66,
+            height: 66,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                  colors: [AppColors.blush, AppColors.champagne],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
+              border: Border.all(color: AppColors.roseGold, width: 1.4),
+              boxShadow: [
+                BoxShadow(
+                    color: tint(AppColors.roseGold, .25),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6)),
+              ],
+            ),
+            child: Icon(icon, color: AppColors.roseGold, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall),
+        ]),
+      ),
+    );
+  }
+}
+
+/// Drag the handle to compare before and after.
+class BeforeAfterCard extends StatefulWidget {
+  const BeforeAfterCard({super.key});
+  @override
+  State<BeforeAfterCard> createState() => _BeforeAfterCardState();
+}
+
+class _BeforeAfterCardState extends State<BeforeAfterCard> {
+  double _v = .5;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(26),
+      child: SizedBox(
+        height: 170,
+        child: LayoutBuilder(builder: (context, box) {
+          Widget half(String label, List<Color> colors, IconData icon) => Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: colors, begin: Alignment.topLeft, end: Alignment.bottomRight)),
+                child: Stack(children: [
+                  Center(child: Icon(icon, size: 64, color: tint(Colors.white, .7))),
+                  Positioned(
+                      left: 14, bottom: 12,
+                      child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+                ]),
+              );
+          return GestureDetector(
+            onHorizontalDragUpdate: (d) =>
+                setState(() => _v = (_v + d.delta.dx / box.maxWidth).clamp(.08, .92)),
+            child: Stack(children: [
+              Positioned.fill(
+                  child: half('After', const [Color(0xFFB76E79), Color(0xFFF7E7CE)], Icons.auto_awesome)),
+              Positioned.fill(
+                child: ClipRect(
+                  clipper: _LeftClipper(_v),
+                  child: half('Before', const [Color(0xFF8E8A8C), Color(0xFFD8D2D4)], Icons.hotel_class_outlined),
+                ),
+              ),
+              Positioned(
+                left: box.maxWidth * _v - 1.5, top: 0, bottom: 0,
+                child: Container(width: 3, color: Colors.white),
+              ),
+              Positioned(
+                left: box.maxWidth * _v - 18, top: 65,
+                child: Container(
+                  width: 36, height: 36,
+                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                  child: const Icon(Icons.swap_horiz, color: AppColors.roseGold),
+                ),
+              ),
+            ]),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _LeftClipper extends CustomClipper<Rect> {
+  final double f;
+  _LeftClipper(this.f);
+  @override
+  Rect getClip(Size s) => Rect.fromLTWH(0, 0, s.width * f, s.height);
+  @override
+  bool shouldReclip(covariant _LeftClipper old) => old.f != f;
+}

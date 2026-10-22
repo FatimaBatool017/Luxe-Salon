@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+
+class Service {
+  final String name;
+  final IconData icon;
+  final int price; // in Rs
+  final int mins;
+  const Service(this.name, this.icon, this.price, this.mins);
+}
+
+class Stylist {
+  final String name, role;
+  final double rating;
+  final Color color;
+  const Stylist(this.name, this.role, this.rating, this.color);
+}
+
+class Offer {
+  final String title, subtitle;
+  final List<Color> colors;
+  const Offer(this.title, this.subtitle, this.colors);
+}
+
+const services = [
+  Service('Haircut', Icons.content_cut, 2500, 45),
+  Service('Hair Color', Icons.palette_outlined, 6500, 120),
+  Service('Facial', Icons.face_retouching_natural, 3500, 60),
+  Service('Makeup', Icons.brush_outlined, 8000, 90),
+  Service('Nails', Icons.back_hand_outlined, 2000, 50),
+  Service('Spa', Icons.spa_outlined, 5000, 75),
+  Service('Waxing', Icons.auto_awesome, 1800, 30),
+  Service('Bridal', Icons.diamond_outlined, 25000, 240),
+];
+
+const stylists = [
+  Stylist('Ayesha', 'Hair colour artist', 4.9, Color(0xFFB76E79)),
+  Stylist('Hira', 'Bridal makeup', 4.8, Color(0xFFD4AF37)),
+  Stylist('Zara', 'Nail designer', 4.7, Color(0xFF9C6B8E)),
+  Stylist('Mehwish', 'Skin and facial expert', 4.9, Color(0xFFC98B76)),
+];
+
+const offers = [
+  Offer('Bridal Glow Package', 'Makeup, hair and facial', [Color(0xFFB76E79), Color(0xFFE8B4B8)]),
+  Offer('Keratin Treatment', 'New this month, 20% off', [Color(0xFFD4AF37), Color(0xFFF7E7CE)]),
+  Offer('Mani + Pedi Duo', 'Bring a friend, save Rs 1,000', [Color(0xFF9C6B8E), Color(0xFFF8E1E7)]),
+];
+
+// (label, icon, colour, tile height)
+const trendingLooks = [
+  ('Balayage waves', Icons.waves, Color(0xFFE8B4B8), 190.0),
+  ('Glass nails', Icons.brush, Color(0xFFF7E7CE), 130.0),
+  ('Soft glam', Icons.face_3, Color(0xFFD9A5B3), 150.0),
+  ('Curtain bangs', Icons.content_cut, Color(0xFFEBD3C0), 170.0),
+];
+
+// (quote, client)
+const reviews = [
+  ('Best balayage I have ever had. The salon feels like a spa.', 'Sana R.'),
+  ('Booked my bridal look here. Everyone asked who did my makeup.', 'Maryam K.'),
+  ('On time, spotless and the staff are so kind.', 'Iqra A.'),
+];
